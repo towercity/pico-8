@@ -124,9 +124,16 @@ function ants_eat()
 	food_loop(function(food)
 		if(food) then
 			local eat=pget(food.x,food.y)
-			--print(eat)
 			if(eat==0) -- has ant on it
 			then
+				--make ant live longer
+				foreach(ants, function(ant)
+					if(ant.x==food.x and 
+						  ant.y==food.y) then
+						ant.age=ant.age-100
+					end
+				end)
+				--remove the food
 				del(foods,food)
 			end
 		end
