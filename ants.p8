@@ -1,211 +1,228 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
--- base logic
+-- ants
+-- by j konger
 
 function _init() 
- -- allow mouse :)
- poke(0x5f2d, 1)
+   -- allow mouse :)
+   poke(0x5f2d, 1)
 
- cur_init()
-	ants_init()
-	food_init()
-end
-
-function _draw()
-	cls(4)
-	food_draw()
-	ants_draw()
-	ants_count()
-	cur_draw()
+   cur_init()
+   ants_init()
+   food_init()
 end
 
 function _update60()
- cur_update()
- local click=stat(34)
- --left click
- if(1==click) then
- 	sfx(0,-1,4)
-  ants_add(cur_x,cur_y)
- end
- --right click
- if(2==click) then
- 	food_add(cur_x,cur_y)
- end
- 
- food_update()
- ants_update()
+   cur_update()
+   local click=stat(34)
+   --left click
+   if(1==click) then
+      sfx(0,-1,4)
+      ants_add(cur_x,cur_y)
+   end
+   --right click
+   if(2==click) then
+      food_add(cur_x,cur_y)
+   end
+   
+   food_update()
+   ants_update()
 end
+
+function _draw()
+   cls(4)
+   food_draw()
+   ants_draw()
+   --ants_count()
+   cur_draw()
+end
+
+
+
+
 -->8
 -- cursor
 
 function cur_init()
- cur_spr=1
- cur_x=60
- cur_y=60
+   cur_spr=1
+   cur_x=60
+   cur_y=60
 end
 
 function cur_draw()
-	spr(cur_spr,cur_x,cur_y)
+   spr(cur_spr,cur_x,cur_y)
 end
 
 function cur_update()
- --mouse loc
-	cur_x=stat(32)-1
-	cur_y=stat(33)-1
+   --mouse loc
+   cur_x=stat(32)-1
+   cur_y=stat(33)-1
 end
 -->8
 -- ants
 
 function ants_init()
-	ants={}
+   ants={}
 end
 
 function ants_add(x,y)
-	ants[#ants+1]={x=x,y=y,age=0}
+   ants[#ants+1]=
+     {x=x,y=y,age=0}
 end
 
 function ants_loop(func)
-	loop_pixels(ants,func)
+   loop_pixels(ants,func)
 end
 
 function ants_draw()
-	ants_loop(
-		function(ant)
-			pset(ant.x,ant.y,0)
-		end
-	)
+   ants_loop(
+      function(ant)
+         pset(ant.x,ant.y,0)
+      end
+   )
 end
 
 function ants_move()
-	ants_loop(ant_move)
+   ants_loop(ant_move)
 end
 
 function ant_move(ant)
-	local movement=rnd(100)
-	
-	if(95<movement) then
-		ant.x=ant.x+1
-	elseif(90<movement) then
-		ant.y=ant.y+1
-	elseif(85<movement) then
-		ant.x=ant.x-1
-	elseif(80<movement) then
-		ant.y=ant.y-1
-	end
-	
-	ant.x=loop_screen(ant.x)
-	ant.y=loop_screen(ant.y)
+   local movement=rnd(100)
+   
+   if(95<movement) then
+      ant.x=ant.x+1
+   elseif(90<movement) then
+      ant.y=ant.y+1
+   elseif(85<movement) then
+      ant.x=ant.x-1
+   elseif(80<movement) then
+      ant.y=ant.y-1
+   end
+   
+   ant.x=loop_screen(ant.x)
+   ant.y=loop_screen(ant.y)
 end
 
 function ants_age()
-	ants_loop(function(ant)
-		-- basic rand change to die
-		if(ant) then
-			local dead=
-				flr(rnd(2000-ant.age))
-			if(0==dead) then
-				del(ants,ant)
-			else
-				ant.age = ant.age+1
-			end
-		end
-	end)
+   ants_loop(function(ant)
+     -- basic rand change to die
+     if(ant) then
+        local dead=
+           flr(rnd(2000-ant.age))
+			
+        if(0==dead) then
+           del(ants,ant)
+        else
+           ant.age = ant.age+1
+        end
+     end
+   end
+   )
 end
 
 function ants_count()
-	local text="ants: " .. #ants
-	print(text,2,120,6)
+   local text="ants: " .. #ants
+   print(text,2,120,6)
 end
 
 function ants_eat()
-	-- we actually loop the food
-	-- to easy unset it
-	food_loop(function(food)
-		if(food) then
+   -- we actually loop the food
+   -- to easy unset it
+   food_loop(
+      function(food)
+         if(food) then
 			local eat=pget(food.x,food.y)
-			if(eat==0) -- has ant on it
-			then
-				--make ant live longer
-				foreach(ants, function(ant)
-					if(ant.x==food.x and 
-						  ant.y==food.y) then
-						ant.age=ant.age-100
-					end
-				end)
-				--remove the food
-				del(foods,food)
-				sfx(1)
+            
+            -- has ant on it
+			if(eat==0) then
+               --make ant live longer
+               foreach(ants,
+                       function(ant)
+                          if(
+                             ant.x==food.x and 
+                             ant.y==food.y
+                          ) then
+                             ant.age=ant.age-100
+                          end
+                       end
+               )
+               --remove the food
+               del(foods,food)
+               sfx(1)
 			end
-		end
-	end)
+         end
+      end
+   )
 end
 
 function ants_update()
-	ants_move()
-	ants_eat()
-	ants_age()
+   ants_move()
+   ants_eat()
+   ants_age()
 end
 -->8
 -- loop helpers
 
 function loop_screen(pos)
-	if(128<pos) return 0
-	if(0>pos) return 128
+   if(128<pos) return 0
+   if(0>pos) return 128
 
-	return pos
-end
+   return pos
+   end
 
 function loop_pixels(arr,func)
-	for i=1,#arr do
-		func(arr[i])
-	end
+   for i=1,#arr do
+      func(arr[i])
+   end
 end
 -->8
 --food
 
 function food_init()
-	f_sprite={2,3}
-	foods={}
-	food_can_add=0
+   f_sprite={2,3}
+   foods={}
+   food_can_add=0
 end
 
 function food_add(c_x,c_y)
-	--only add if not delayed
-	if(0<=food_can_add) return
-	sfx(2)
-	--reset delay
-	food_can_add=25
-	local s_offset=
-		rnd(f_sprite) * 8
-	
-	-- loop the sprite to add
-	-- pixels
-	for x=0,7 do
-		for y=0,7 do
-			local pix=sget(x+s_offset,y)
-			if(0!=pix) then
-				foods[#foods+1]=
-					{x=c_x+x,y=c_y+y,col=pix}
-			end
-		end
-	end
+   --only add if not delayed
+   if(0<=food_can_add) return
+
+   sfx(2)
+   
+   --reset delay
+   food_can_add=25
+   local s_offset=
+      rnd(f_sprite) * 8
+   
+   -- loop the sprite to add
+   -- pixels
+   for x=0,7 do
+      for y=0,7 do
+         local pix=sget(x+s_offset,y)
+         if(0!=pix) then
+            foods[#foods+1]=
+               {x=c_x+x,y=c_y+y,col=pix}
+         end
+      end
+   end
 end
 
 function food_draw()
-	food_loop(
-		function(food)
-			pset(food.x,food.y,food.col)
-		end
-	)
+   food_loop(
+      function(food)
+         pset(food.x,food.y,food.col)
+      end
+   )
 end
 
 function food_loop(func)
-	loop_pixels(foods,func)
+   loop_pixels(foods,func)
 end
 
 function food_update()
-	food_can_add=food_can_add-1
+   food_can_add=food_can_add-1
 end
 __gfx__
 00000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
