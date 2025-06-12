@@ -8,6 +8,10 @@ function _init()
    -- allow mouse :)
    poke(0x5f2d, 1)
 
+   loop_num = 2
+   lx = 0
+   ly = 0
+
    cur_init()
    ants_init()
    food_init()
@@ -25,6 +29,12 @@ function _update60()
    if(2==click) then
       food_add(cur_x,cur_y)
    end
+
+   if(btnp(5)) loop_num = loop_num + 1
+   if(btnp(1)) lx = lx + 1
+   if(btnp(2)) ly = ly + 1
+   if(btnp(0)) lx = lx - 1
+   if(btnp(3)) ly = ly - 1
    
    food_update()
    ants_update()
@@ -36,6 +46,8 @@ function _draw()
    ants_draw()
    --ants_count()
    cur_draw()
+
+   find_nearby_dots(lx,ly,loop_num)
 end
 
 
@@ -224,6 +236,42 @@ end
 function food_update()
    food_can_add=food_can_add-1
 end
+-->8
+-- sensing
+
+-- finds pixels within dist steps from x,y
+-- todo: handle x and y
+function find_nearby_dots(x,y,dist)
+   local vals={}
+   print("dist:" .. dist .." x:"..x.." y:"..y)
+
+   
+   for i=0,dist-1 do
+      local x1,x2=x+dist-i,x-dist+i
+      local y1,y2=y+i,y-i
+      
+      if(0==i) then
+         add(vals, {x1,y1})
+         add(vals, {x2,y1})
+         add(vals, {y2,x1}) 
+         add(vals, {y2,x2})
+      else
+         add(vals, {x1,y1})
+         add(vals, {x2,y1})
+         add(vals, {x1,y2})
+         add(vals, {x2,y2})
+      end
+   end
+
+   loop_pixels(vals,
+               function(arr)
+                  print("[" .. arr[1] .. "," .. arr[2] .."]")
+               end
+   )
+
+   return vals
+end
+
 __gfx__
 00000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000016100000000ee00000bbbb00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
