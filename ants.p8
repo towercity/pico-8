@@ -11,6 +11,8 @@ function _init()
    cur_init()
    ants_init()
    food_init()
+
+   debug_text = ''
 end
 
 function _update60()
@@ -36,6 +38,8 @@ function _draw()
    ants_draw()
    --ants_count()
    cur_draw()
+
+   print(debug_text)
 end
 
 
@@ -88,17 +92,46 @@ function ants_move()
 end
 
 function ant_move(ant)
-   local movement=rnd(100)
+   local movement,x,y=rnd(100),ant.x,ant.y
    
    if(98<movement) then
-      ant.x=ant.x+1
+      ant.x=x+1
    elseif(96<movement) then
-      ant.y=ant.y+1
+      ant.y=y+1
    elseif(94<movement) then
-      ant.x=ant.x-1
+      ant.x=x-1
    elseif(92<movement) then
-      ant.y=ant.y-1
+      ant.y=y-1
    else
+      local scent_squares=find_nearby_dots(x,y,3)
+
+      -- if it senses food, go there
+      loop_pixels(
+         scent_squares,
+         function(loc)
+            if( food_is(loc[1], loc[2]) ) then
+               local difx, dify, gox, dir =
+                  loc[1]-ant.x, loc[2]-ant.y, true, 1
+               -- use subtraction to get possible dirs, normalize to one, random of available
+
+               -- choose x or y: comp the abs value; prefer y move
+               if(abs(dify) >= abs(difx)) then
+                  gox=false
+                  dir=dify/abs(dify)
+               else
+                  -- x movement
+                  dir=difx/abs(difx)
+               end
+
+               -- so move it
+               if(gox) then
+                  ant.x = ant.x + dir
+               else
+                  ant.y = ant.y + dir
+               end
+            end
+         end
+      )
    end
    
    ant.x=loop_screen(ant.x)
@@ -184,6 +217,18 @@ function food_init()
    f_sprite={2,3}
    foods={}
    food_can_add=0
+   food_pal={2,3,7,8,11,14}
+end
+
+-- test if loc is food
+function food_is(x,y)
+   for _, val in pairs(food_pal) do
+      if pget(x,y) == val then
+         return true
+      end
+   end
+   
+   return false
 end
 
 function food_add(c_x,c_y)
@@ -256,8 +301,8 @@ end
 __gfx__
 00000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000016100000000ee00000bbbb00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-007007001661000000e6ee000bb77bb0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00077000166610000e66e8800b78e730000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+007007001661000000e7ee000bb77bb0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00077000166610000e77e8800b78e730000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00077000166661000ee888200b788730000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00700700166110000088820003377330000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000011610000008200000333300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
