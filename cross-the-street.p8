@@ -6,8 +6,8 @@ __lua__
 
 function _init()
    t=0
+   turn=1
    sprites={2,3}
-   dance_offset=10
    x=7
    y=0
 end
@@ -15,24 +15,54 @@ end
 function _update()
    t+=1
 
-   if btnp(0) then x-=1 end
-   if btnp(1) then x+=1 end
-   if btnp(2) then y-=1 end
-   if btnp(3) then y+=1 end
-   
-   if y>14 then y=14 end
-   if x>15 then x=15 end
-   if x<0 then x=0 end
-   if y<0 then y=0 end
+   move_player(btnp())
 end
 
 function _draw()
    cls()
    map()
+   
    print(x .. ", " .. y)
+   print("turn " .. turn)
+   print("btn: " .. int_to_bin_string(btn()) .. "," .. btn())
    dance_sprite(sprites, x*8, y*8,1,2)
    spr(128,14*8,4*8,2,1)
 end
+
+
+function move_player(btn_code)
+   if((btn_code & 0b1111) != 0) then
+      local mx, my = x, y
+
+      -- todo: bitwise with held z for daigonal
+      if btnp(0) then mx-=1 end
+      if btnp(1) then mx+=1 end
+      if btnp(2) then my-=1 end
+      if btnp(3) then my+=1 end
+      band(btn(),2)/2-band(btn(),1)
+
+      if(my<15 and my>-1 and mx<16 and mx>-1) then
+         run_turn()
+         x,y=mx,my
+      end
+   end
+end
+
+
+function run_turn()
+   turn+=1
+end
+
+
+function int_to_bin_string(num)
+   local bin=""
+   for i=0,7 do
+      bin=band(num,2^i)\2^i..bin
+   end
+
+   return bin
+end
+
 
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
