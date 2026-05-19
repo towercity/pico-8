@@ -2,20 +2,18 @@ pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
 function _init()
-   bs={} --boids
-   grid={} --fake 2d grid for easy calc
-   make_boids(1100)
+   _init_boids(1100)
    f=0
 end
 
 function _update60()
    f=f+1
-   move_boids()
+   _update_boids()
 end
 
 function _draw()
    cls(7)
-   draw_boids()
+   _draw_boids()
    -- cpu
    print(stat(1),4,4,11)
    print(f)
@@ -23,36 +21,43 @@ end
 
 
 -->8
-function make_boids(bc)
-   for i=1,bc do
-      add(bs,make_boid())
+function _init_boids(boids_count)
+   -- multiple tables for data, so we don't need expensive lookups
+   boids_pos,grid,boids_vel,boids_angle={},{},{},{}   
+
+   for i=1,boids_count do
+      make_boid()
    end
 end
 
 function make_boid()
+   -- make a pos
    local lb={
       x=flr(rnd(128)),
       y=flr(rnd(128)),
       z=rnd({1,2,14})
    }
+
+   -- if we have a boid at this pos, rerun the func from start: this'n cant be
+   if boid_at(lb) then return make_boid() end
+
+   -- once we're here, do some more calcs for angle and speed
+   local vel,angel=rnd(),rnd()
    
-   if boid_at(lb) then
-      return make_boid()
-   end
-   
+   add(boids_pos,lb)
+   add(boids_vel,vel)
+   add(boid_angle,angle)
    grid[grid_key(lb)]=lb
-   
-   return lb
 end
 
-function draw_boids()
-   for _,b in ipairs(bs) do
+function _draw_boids()
+   for _,b in ipairs(boids_pos) do
       pset(b.x,b.y,b.z)
    end
 end
 
-function move_boids()
-   for _,b in ipairs(bs) do
+function _update_boids()
+   for _,b in ipairs(boids_pos) do
       move_boid(b)
    end
 end
