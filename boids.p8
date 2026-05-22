@@ -2,7 +2,7 @@ pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
 function _init()
-   _init_boids(900)
+   _init_boids(150)
    f=0
 end
 
@@ -53,6 +53,8 @@ end
 
 function _update_boids()
    for idx,b in ipairs(boids_pos) do
+      -- find neighbors
+      --get_closest(b)
       move_boid(b,boids_speed[idx],boids_angle[idx])
    end
 end
@@ -71,6 +73,53 @@ function move_boid(b,speed,angle)
    end
 end
 -->8
+-- point comps
+
+-- use pivot sort to get closest 5 (i dont understand the algo yet, read online)
+function get_closest(b)
+   local k=5 --how many closest to find
+   local l,r=1,#boids_pos --left and right, for use below
+
+   local function compare(p1,p2) --compare two points
+      local d1=(p1.x-b.x)^2+(p1.y-b.y)^2
+      local d2=(p2.x-b.x)^2+(p2.y-b.y)^2
+      return d1-d2
+   end  
+
+   -- the magic algo: partition for pivot sort (i have an arts degree)
+   local function partition(bs,l,r)
+      local pivot=bs[l]
+
+      while l<r do
+         while l<r and compare(bs[r],pivot) >= 0 do
+            r=r-1
+         end
+         bs[l] = bs[r]
+         while l<r and compare(bs[l],pivot) <= 0 do
+            l=l+1
+         end
+         bs[r]=bs[l]
+      end
+      bs[l]=pivot
+      return l
+   end
+
+   while l<=r do
+      local pivotIndex = partition(boids_pos,l,r)
+      if pivotIndex == k then break end
+      if pivotIndex < k then
+         l = pivotIndex + 1
+      else
+         r = pivotIndex - 1
+      end
+   end
+
+   local closest = {}
+   for i = 1, k do
+      closest[i] = boids_pos[i]
+   end
+   return closest
+end
 
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
